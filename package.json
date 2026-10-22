@@ -1,0 +1,12 @@
+{
+  "name": "easyclock",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"npm run dev -w apps/api\" \"npm run dev -w apps/web\"",
+    "build": "npm run build -w apps/web && npm run build -w apps/api",
+    "start": "npm run start -w apps/api",
+    "test": "npm run test -w apps/api"
+  },
+  "devDependencies": {"concurrently": "^9.1.2"}
+}
