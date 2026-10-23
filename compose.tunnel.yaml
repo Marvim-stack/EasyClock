@@ -1,0 +1,24 @@
+# Publicação usando o computador local. Não requer VPS nem portas públicas abertas.
+# Executar isoladamente: docker compose -f compose.tunnel.yaml up -d --build
+services:
+  easyclock:
+    extends:
+      file: compose.production.yaml
+      service: easyclock
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    network_mode: host
+    init: true
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Crie o tunnel e preencha CLOUDFLARE_TUNNEL_TOKEN no .env}
+    depends_on:
+      easyclock:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

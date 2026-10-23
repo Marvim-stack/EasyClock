@@ -1,7 +1,8 @@
 # EasyClock
 
-Para publicar em **easyclock.pro**, veja o [guia de publicação em VPS com HTTPS](docs/deploy.md).
-A configuração está em `compose.production.yaml`; o Compose padrão continua sendo local.
+Para publicar em **easyclock.pro** sem pagar hospedagem, veja o [guia com Cloudflare Tunnel e computador local](docs/deploy-free.md).
+Se preferir uma VPS, veja o [guia de publicação em VPS com HTTPS](docs/deploy.md).
+O Compose padrão continua sendo local.
 
 ## Login e usuários
 
