@@ -15,6 +15,8 @@ O painel antigo permanece em `/painel-local.html` e, com Supabase configurado,
 usa a mesma sessão e os dados da conta autenticada.
 Veja [como conectar o projeto gratuito e testar o login](docs/access-setup.md).
 
+Para publicar a primeira versão online, siga o [guia de VPS com Docker e HTTPS](docs/deploy.md).
+
 React + NestJS + Playwright para registrar ponto às **09:00, 12:00, 13:00 e 18:20**, no fuso **America/Sao_Paulo**. Começa pausado, em simulação e configurado para segunda a sexta.
 
 ## Rodar

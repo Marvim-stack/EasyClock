@@ -1,0 +1,22 @@
+services:
+  easyclock:
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HEADLESS: "true"
+      EASYCLOCK_DATA_DIR: /app/data
+      LD_LIBRARY_PATH: ""
+  caddy:
+    image: caddy:2-alpine
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      APP_URL: ${APP_URL:?Defina APP_URL com o endereço HTTPS público no .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

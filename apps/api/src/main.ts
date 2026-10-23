@@ -7,9 +7,11 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { AccessController, AccessRequestGuard } from './access.controller';
 import { ClockController, ClockGuard } from './clock.controller';
 import { Clocks } from './clocks';
+import { validateProductionEnvironment } from './production-env';
 
 const root = resolve(__dirname, '../../..');
 config({ path: resolve(root, '.env') });
+validateProductionEnvironment(process.env);
 
 @Module({
   imports: [ServeStaticModule.forRoot({ rootPath: resolve(root, 'apps/web/dist'), exclude: ['/api/{*path}'] })],
