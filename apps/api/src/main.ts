@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { config } from 'dotenv';
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync, openSync, closeSync, unlinkSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Controller, Get, Post, Module, Injectable, Inject, ConflictException, OnModuleInit, OnModuleDestroy, CanActivate, ExecutionContext, UseGuards, Body, Query, BadRequestException } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -8,6 +8,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { due, localTime } from './schedule';
 import { register, fetchPunches } from './browser';
 import { defaultSlots, Settings, Slot, validateSettings } from './settings';
+import { acquireInstanceLock } from './instance-lock';
 
 const root = resolve(__dirname, '../../..');
 config({ path: resolve(root, '.env') });
@@ -23,7 +24,7 @@ class Clock implements OnModuleInit, OnModuleDestroy {
   private timer?: NodeJS.Timeout;
   private busy = false;
   private lock = resolve(data, 'instance.lock');
-  private ownsLock = false;
+  private releaseLock?: () => Promise<void>;
   private settingsFile = resolve(data, 'settings.json');
   private settings: Settings = existsSync(this.settingsFile) ? JSON.parse(readFileSync(this.settingsFile, 'utf8')) : {
     group: process.env.EASYMOB_GROUP || '', user: process.env.EASYMOB_USER || '', password: process.env.EASYMOB_PASSWORD || '',
@@ -74,14 +75,16 @@ class Clock implements OnModuleInit, OnModuleDestroy {
     } catch { throw new BadRequestException('Não foi possível consultar o portal. Confira acesso, URL e seletor da tabela. O cache anterior foi preservado.'); }
     finally { this.busy = false; }
   }
-  onModuleInit() {
-    try { closeSync(openSync(this.lock, 'wx')); this.ownsLock = true; }
-    catch { throw new Error('Outra instância ou lock antigo em data/instance.lock. Consulte o README.'); }
+  async onModuleInit() {
+    this.releaseLock = await acquireInstanceLock(this.lock, () => {
+      console.error('A trava de instância foi perdida. Encerrando para impedir disparos concorrentes.');
+      process.exit(1);
+    });
     this.timer = setInterval(() => { void this.tick().catch(() => console.error('Falha ao executar o agendador; consulte data/state.json.')); }, 5000);
   }
-  onModuleDestroy() {
+  async onModuleDestroy() {
     clearInterval(this.timer);
-    if (this.ownsLock) unlinkSync(this.lock);
+    await this.releaseLock?.();
   }
   private save() {
     writeFileSync(`${stateFile}.tmp`, JSON.stringify(this.state, null, 2), { mode: 0o600 });

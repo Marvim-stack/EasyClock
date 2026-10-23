@@ -5,6 +5,7 @@ COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 RUN npm ci
 RUN npx playwright install --with-deps chromium
+RUN command -v flock
 COPY . .
 RUN npm run build
-CMD ["npm", "start"]
+CMD ["node", "apps/api/dist/main.js"]

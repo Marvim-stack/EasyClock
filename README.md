@@ -46,7 +46,7 @@ O computador deve permanecer ligado, conectado e sem suspensão, com o servidor 
 
 O estado fica em `data/state.json`, fora do Git. Cada horário é salvo antes de abrir o navegador e não recebe nova tentativa automática, inclusive se falhar. Após clique sem confirmação, o status será **incerto**: confira diretamente no EasyMOB. Após interrupção abrupta, estados **iniciando** ou **enviado** também exigem conferência.
 
-Execute uma instância com o mesmo diretório de dados. `data/instance.lock` bloqueia outra instância. Depois de desligamento abrupto, confirme que o processo anterior acabou antes de remover esse lock e reiniciar. Preserve o histórico do dia: ele evita disparos duplicados. Estado corrompido exige intervenção, sem recuperação que descarte silenciosamente o histórico.
+Execute uma instância com o mesmo diretório de dados. `data/instance.lock` usa a trava de sistema `flock` (pacote Linux `util-linux`). O arquivo pode permanecer no disco: a trava é liberada automaticamente quando o processo termina, inclusive após interrupção abrupta. Não remova o arquivo enquanto uma instância estiver rodando. Preserve o histórico do dia: ele evita disparos duplicados. Estado corrompido exige intervenção, sem recuperação que descarte silenciosamente o histórico.
 
 ## Validação
 
