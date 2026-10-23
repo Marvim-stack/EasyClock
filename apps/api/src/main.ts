@@ -6,7 +6,7 @@ import { Controller, Get, Post, Module, Injectable, Inject, ConflictException, O
 import { NestFactory } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { due, localTime } from './schedule';
-import { register, fetchPunches } from './browser';
+import { register, fetchPunches, PortalError } from './browser';
 import { defaultSlots, Settings, Slot, validateSettings } from './settings';
 import { acquireInstanceLock } from './instance-lock';
 
@@ -63,7 +63,6 @@ class Clock implements OnModuleInit, OnModuleDestroy {
   getPunches() { return this.punches; }
   async syncPunches() {
     if (this.busy) throw new ConflictException('Aguarde a execução terminar.');
-    if (!process.env.EASYMOB_PUNCHES_SELECTOR) throw new BadRequestException('A consulta precisa do seletor EASYMOB_PUNCHES_SELECTOR da tabela do portal.');
     this.busy = true;
     try {
       const rows = await fetchPunches({ ...this.settings });
@@ -72,7 +71,10 @@ class Clock implements OnModuleInit, OnModuleDestroy {
       renameSync(`${this.punchesFile}.tmp`, this.punchesFile);
       this.punches = next;
       return this.punches;
-    } catch { throw new BadRequestException('Não foi possível consultar o portal. Confira acesso, URL e seletor da tabela. O cache anterior foi preservado.'); }
+    } catch (error) {
+      const message = error instanceof PortalError ? error.message : 'Não foi possível conectar à consulta do EasyMOB. Confira a conexão e tente novamente.';
+      throw new BadRequestException(`${message} A última consulta salva foi preservada.`);
+    }
     finally { this.busy = false; }
   }
   async onModuleInit() {

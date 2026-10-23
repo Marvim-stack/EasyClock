@@ -1,8 +1,10 @@
 import { chromium, Page } from 'playwright';
 import { Settings, Kind } from './settings';
 
+export class PortalError extends Error {}
+
 async function session<T>(settings: Settings, action: (page: Page) => Promise<T>): Promise<T> {
-  if (!settings.group || !settings.user || !settings.password) throw new Error('Configure suas credenciais.');
+  if (!settings.group || !settings.user || !settings.password) throw new PortalError('Abra Acesso e ajustes, informe suas credenciais e salve antes de consultar.');
   const browser = await chromium.launch({ headless: process.env.HEADLESS !== 'false' });
   try {
     const page = await browser.newPage({ timezoneId: 'America/Sao_Paulo', locale: 'pt-BR' });
@@ -14,7 +16,10 @@ async function session<T>(settings: Settings, action: (page: Page) => Promise<T>
     await page.locator('#usuario').fill(settings.user);
     await page.locator('#senha').fill(settings.password);
     await page.locator('#btnLogin').click();
-    await page.locator('#btnLogin').waitFor({ state: 'hidden' });
+    try {
+      await page.locator('#btnLogin').waitFor({ state: 'hidden' });
+      await page.waitForLoadState('domcontentloaded');
+    } catch { throw new PortalError('O login não foi concluído. Confira grupo, usuário e senha em Acesso e ajustes.'); }
     return await action(page);
   } finally {
     await browser.close();
@@ -47,8 +52,7 @@ export async function register(settings: Settings, dryRun: boolean, kind: Kind, 
 }
 
 export async function fetchPunches(settings: Settings): Promise<string[][]> {
-  const selector = process.env.EASYMOB_PUNCHES_SELECTOR;
-  if (!selector) throw new Error('Configure EASYMOB_PUNCHES_SELECTOR para a tabela de marcações do portal.');
+  const selector = process.env.EASYMOB_PUNCHES_SELECTOR?.trim();
   return session(settings, async page => {
     const target = process.env.EASYMOB_PUNCHES_URL;
     if (target) {
@@ -56,8 +60,20 @@ export async function fetchPunches(settings: Settings): Promise<string[][]> {
       if (url.origin !== 'https://easymob.metadados.com.br') throw new Error('URL de marcações inválida.');
       await page.goto(url.href, { waitUntil: 'domcontentloaded' });
     }
-    const table = page.locator(selector);
-    await table.waitFor({ state: 'visible' });
+    if (!selector && !target) {
+      try {
+        await page.locator('#btnConsultar').click();
+        await page.locator('#ModalConsultasMarcacoes').waitFor({ state: 'visible' });
+      } catch { throw new PortalError('O EasyMOB não abriu a consulta de marcações. Tente novamente ou consulte diretamente no portal.'); }
+    }
+    const table = page.locator(selector || (target ? 'table' : '#ModalConsultasMarcacoes table'));
+    if (await table.count() > 1) throw new PortalError('A consulta encontrou mais de uma tabela. Confira a configuração da integração.');
+    try {
+      await table.waitFor({ state: 'visible' });
+      await table.locator('tbody tr').first().waitFor({ state: 'attached' });
+    } catch { throw new PortalError('O portal abriu a consulta, mas não carregou as marcações. Tente novamente.'); }
+    const empty = await table.locator('tbody').innerText();
+    if (/nenhuma marca[çc][aã]o encontrada/i.test(empty)) return [];
     return table.locator('tr').evaluateAll(rows => rows.map(row =>
       Array.from(row.querySelectorAll('th,td')).map(cell => cell.textContent?.trim() || '')
     ).filter(row => row.length > 0));
