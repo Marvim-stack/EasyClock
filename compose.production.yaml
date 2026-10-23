@@ -1,0 +1,52 @@
+# Executar isoladamente: docker compose -f compose.production.yaml up -d --build
+# Requer servidor Linux com portas 80/443 disponíveis e DNS apontado para ele.
+services:
+  easyclock:
+    build: .
+    network_mode: host
+    init: true
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      APP_URL: https://easyclock.pro
+      PORT: "3000"
+      SUPABASE_URL: ${SUPABASE_URL:?Preencha SUPABASE_URL no .env}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:?Preencha SUPABASE_PUBLISHABLE_KEY no .env}
+      DATABASE_URL: ${DATABASE_URL:?Preencha DATABASE_URL no .env}
+      EASYCLOCK_CREDENTIALS_KEY: ${EASYCLOCK_CREDENTIALS_KEY:?Preencha EASYCLOCK_CREDENTIALS_KEY no .env}
+    volumes:
+      - ./data:/app/data
+    shm_size: 1gb
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  caddy:
+    image: caddy:2
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      easyclock:
+        condition: service_healthy
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,5 +1,8 @@
 # EasyClock
 
+Para publicar em **easyclock.pro**, veja o [guia de publicação em VPS com HTTPS](docs/deploy.md).
+A configuração está em `compose.production.yaml`; o Compose padrão continua sendo local.
+
 ## Login e usuários
 
 A página inicial `/` (também em `/acesso.html`) abre as telas de login e cadastro.
