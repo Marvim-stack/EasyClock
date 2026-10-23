@@ -40,6 +40,10 @@ test('API valida conexão, preserva sorteio e mantém agendamento ligado/desliga
   }
   try {
     await start();
+    assert.equal((await request('access/session')).status, 503);
+    assert.equal((await request('access/login', { email: 'pessoa@example.test', password: 'SenhaDeTeste123' })).status, 503);
+    assert.equal((await request('access/admin/users')).status, 503);
+    assert.equal((await request('access/billing/checkout', {})).status, 503);
     const settings = await (await request('settings')).json();
     assert.equal('password' in settings, false);
     const { hasPassword, ...input } = settings;

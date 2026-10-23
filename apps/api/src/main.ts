@@ -9,6 +9,7 @@ import { due, localTime, variedSlots } from './schedule';
 import { register, fetchPunches, testConnection, PortalError } from './browser';
 import { defaultSlots, fixedSlots, Settings, Slot, validateSettings } from './settings';
 import { acquireInstanceLock } from './instance-lock';
+import { AccessController } from './access.controller';
 
 const root = resolve(__dirname, '../../..');
 config({ path: resolve(root, '.env') });
@@ -208,7 +209,7 @@ class Api {
   @Get('punches') punches() { return this.clock.getPunches(); }
   @Post('punches/sync') sync() { return this.clock.syncPunches(); }
 }
-@Module({ imports: [ServeStaticModule.forRoot({ rootPath: resolve(root, 'apps/web/dist'), exclude: ['/api/{*path}'] })], controllers: [Api], providers: [Clock, LocalGuard] })
+@Module({ imports: [ServeStaticModule.forRoot({ rootPath: resolve(root, 'apps/web/dist'), exclude: ['/api/{*path}'] })], controllers: [Api, AccessController], providers: [Clock, LocalGuard] })
 class App {}
 async function main() {
   const app = await NestFactory.create(App);

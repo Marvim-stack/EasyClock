@@ -1,5 +1,13 @@
 # EasyClock
 
+## Login e usuários
+
+A página inicial `/` (também em `/acesso.html`) abre as telas de login e cadastro.
+Os formulários estão ligados aos contratos da API, sem contas ou assinaturas fictícias.
+Banco, autenticação, e-mail e pagamento serão conectados na próxima etapa.
+O painel local antigo permanece independente em `/painel-local.html`.
+Veja [o que configurar para concluir a integração](docs/access-setup.md).
+
 React + NestJS + Playwright para registrar ponto às **09:00, 12:00, 13:00 e 18:20**, no fuso **America/Sao_Paulo**. Começa pausado, em simulação e configurado para segunda a sexta.
 
 ## Rodar
@@ -13,7 +21,7 @@ npx playwright install --with-deps chromium
 npm run dev
 ```
 
-Abra http://localhost:5173. A API fica em http://localhost:3000. As credenciais fornecidas foram gravadas somente no `.env` local, ignorado pelo Git. Não publique esse arquivo.
+Abra http://localhost:5173 para o login; o painel local fica em http://localhost:5173/painel-local.html. A API fica em http://localhost:3000. As credenciais fornecidas foram gravadas somente no `.env` local, ignorado pelo Git. Não publique esse arquivo.
 
 Para produção:
 
@@ -22,7 +30,7 @@ npm run build
 npm start
 ```
 
-O painel fica em http://localhost:3000. Execução contínua em Linux:
+O login fica em http://localhost:3000 e o painel local antigo em http://localhost:3000/painel-local.html. Execução contínua em Linux:
 
 ```bash
 docker compose up -d --build
