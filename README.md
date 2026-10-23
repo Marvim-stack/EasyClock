@@ -1,5 +1,20 @@
 # EasyClock
 
+## Login e usuários
+
+A página inicial `/` (também em `/acesso.html`) abre as telas de login e cadastro.
+Cadastro, login, confirmação de e-mail e recuperação de senha usam Supabase Auth.
+A sessão fica em cookie HttpOnly, renovado pelo servidor; não há contas fictícias.
+Para começar, crie um projeto Supabase Free e configure o `.env` conforme o guia.
+Veja o passo a passo abaixo; nenhum banco precisa rodar no seu computador.
+O painel completo abre após o login: horários, configurações, conexão e histórico.
+Sem assinatura, é possível configurar e testar a conexão; os controles de automação
+ficam desabilitados. Admin tem acesso completo, incluindo a listagem de usuários.
+Cobrança ainda depende da integração com o Stripe.
+O painel antigo permanece em `/painel-local.html` e, com Supabase configurado,
+usa a mesma sessão e os dados da conta autenticada.
+Veja [como conectar o projeto gratuito e testar o login](docs/access-setup.md).
+
 React + NestJS + Playwright para registrar ponto às **09:00, 12:00, 13:00 e 18:20**, no fuso **America/Sao_Paulo**. Começa pausado, em simulação e configurado para segunda a sexta.
 
 ## Rodar
@@ -13,7 +28,7 @@ npx playwright install --with-deps chromium
 npm run dev
 ```
 
-Abra http://localhost:5173. A API fica em http://localhost:3000. As credenciais fornecidas foram gravadas somente no `.env` local, ignorado pelo Git. Não publique esse arquivo.
+Abra http://localhost:5173 para o login; o painel local fica em http://localhost:5173/painel-local.html. A API fica em http://localhost:3000. As credenciais fornecidas foram gravadas somente no `.env` local, ignorado pelo Git. Não publique esse arquivo.
 
 Para produção:
 
@@ -22,14 +37,35 @@ npm run build
 npm start
 ```
 
-O painel fica em http://localhost:3000. Execução contínua em Linux:
+O login fica em http://localhost:3000 e o painel local antigo em http://localhost:3000/painel-local.html. Execução contínua em Linux:
 
 ```bash
 docker compose up -d --build
 docker compose logs -f
 ```
 
-O Compose usa rede do host Linux para manter o painel no localhost. A API local não tem autenticação; não a exponha à internet.
+O Compose usa rede do host Linux para manter o painel no localhost. Com Supabase
+configurado, as APIs do painel exigem sessão. Sem Supabase, o modo local continua
+restrito ao uso pessoal no localhost.
+
+## Contas e permissões
+
+Cada conta vê seus próprios horários, conexão e histórico. Sem assinatura, o painel
+fica visível e permite salvar configurações e verificar o EasyMOB sem marcar ponto.
+Assinatura em teste/ativa ou papel admin habilita a automação. O servidor consulta
+o banco para ativar, executar o agendamento e confirmar permissão antes do clique;
+vencimento ou indisponibilidade do banco impedem novos registros.
+
+Os dados operacionais ficam em `data/accounts/<id>/`; configurações e credenciais
+são criptografadas com `EASYCLOCK_CREDENTIALS_KEY`. Preserve o diretório e essa
+chave ao trocar de computador/servidor. O agendador usa uma única instância com
+disco persistente. A autenticação e as assinaturas ficam no Supabase.
+
+As páginas públicas não anunciam o teste de sete dias; as condições aparecem na
+área de assinatura, antes de cadastrar cartão. Após enviar confirmação/recuperação,
+o destinatário aparece como texto e o reenvio mantém o mesmo endereço.
+Os [e-mails com a identidade da marca](docs/emails/README.md) estão prontos para
+colar no painel Supabase.
 
 ## Configurar e ativar
 

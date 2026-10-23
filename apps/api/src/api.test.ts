@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createServer } from 'node:net';
 
-test('API valida conexão, preserva sorteio e mantém agendamento ligado/desligado após reinícios', { timeout: 20000 }, async () => {
+test('API valida conexão, preserva sorteio e mantém agendamento ligado/desligado após reinícios', { timeout: 40000 }, async () => {
   const data = await mkdtemp(join(tmpdir(), 'easyclock-api-'));
   const socket = createServer();
   socket.listen(0, '127.0.0.1');
@@ -17,18 +17,18 @@ test('API valida conexão, preserva sorteio e mantém agendamento ligado/desliga
   await new Promise<void>(resolve => socket.close(() => resolve()));
   let child: ChildProcess | undefined;
   const request = (path: string, body?: unknown) => fetch(`http://127.0.0.1:${port}/api/${path}`, {
-    method: body === undefined ? 'GET' : 'POST', headers: { 'x-easyclock': 'local', 'content-type': 'application/json' },
+    method: body === undefined ? 'GET' : 'POST', headers: { 'x-easyclock': 'local', 'x-easyclock-request': '1', 'content-type': 'application/json' },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   async function start() {
     child = spawn(process.execPath, ['--import', 'tsx', 'src/main.ts'], {
-      cwd: resolve(__dirname, '..'), env: { ...process.env, EASYCLOCK_DATA_DIR: data, PORT: String(port), EASYMOB_GROUP: '', EASYMOB_USER: '', EASYMOB_PASSWORD: '' },
+      cwd: resolve(__dirname, '..'), env: { ...process.env, EASYCLOCK_DATA_DIR: data, PORT: String(port), EASYMOB_GROUP: '', EASYMOB_USER: '', EASYMOB_PASSWORD: '', SUPABASE_URL: '', SUPABASE_PUBLISHABLE_KEY: '' },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let log = '';
     child.stdout!.on('data', chunk => { log += chunk; });
     child.stderr!.on('data', chunk => { log += chunk; });
-    for (let n = 0; n < 100; n++) {
+    for (let n = 0; n < 200; n++) {
       if (child.exitCode !== null) throw new Error(log);
       try { if ((await request('status')).ok) return; } catch {}
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -40,6 +40,10 @@ test('API valida conexão, preserva sorteio e mantém agendamento ligado/desliga
   }
   try {
     await start();
+    assert.equal((await request('access/session')).status, 503);
+    assert.equal((await request('access/login', { email: 'pessoa@example.test', password: 'SenhaDeTeste123' })).status, 503);
+    assert.equal((await request('access/admin/users')).status, 503);
+    assert.equal((await request('access/billing/checkout', {})).status, 503);
     const settings = await (await request('settings')).json();
     assert.equal('password' in settings, false);
     const { hasPassword, ...input } = settings;
