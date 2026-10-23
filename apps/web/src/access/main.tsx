@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
-import { canUsePlatform, TRIAL_DAYS, type User, type Subscription, type UserConfiguration } from '../../../api/src/accounts';
+import { TRIAL_DAYS, type User, type Subscription } from '../../../api/src/accounts';
 import { access } from './api';
+import { ClockPanel } from '../ClockPanel';
 import '../style.css';
 import './style.css';
 
@@ -17,7 +18,6 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [subscription, setSubscription] = useState<Subscription | null>();
   const [users, setUsers] = useState<User[] | null>(null);
-  const [settings, setSettings] = useState<UserConfiguration | null>(null);
   const [email, setEmail] = useState('');
   const [emailConfirmed, setEmailConfirmed] = useState(false);
   const [resetSent, setResetSent] = useState(false);
@@ -25,7 +25,6 @@ function App() {
   const [notice, setNotice] = useState('');
   const [pending, setPending] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
-  const allowed = Boolean(user && canUsePlatform(user, subscription ?? null));
   function route(next: string) { setError(''); location.hash = next; }
   useEffect(() => {
     const change = () => { setPage(readPage()); setToken(readToken()); setEmailConfirmed(false); setResetSent(false); setError(''); setLoadFailed(false); };
@@ -54,9 +53,8 @@ function App() {
     let current = true;
     const fail = () => { if (current) setLoadFailed(true); };
     if (page === 'admin' && user.role === 'admin') access.users().then(result => { if (current) setUsers(result.users); }).catch(fail);
-    if (page === 'painel' && allowed) access.settings().then(result => { if (current) setSettings(result.settings); }).catch(fail);
     return () => { current = false; };
-  }, [page, user, allowed]);
+  }, [page, user]);
   useEffect(() => {
     if (page !== 'confirmar-email' || !token) return;
     let current = true;
@@ -82,12 +80,12 @@ function App() {
   }
   return <main className="access-app">
     <header><a className="brand" href={user ? '#painel' : '#login'} aria-label="EasyClock · início"><img className="brand-logo" src="/easyclock-logo.png" width="300" height="100" alt="EasyClock — Chora agora, ri depois"/></a>
-      {user && <nav aria-label="Sua conta"><a href="#painel" aria-current={page === 'painel' ? 'page' : undefined}>Horários</a><a href="#conta" aria-current={page === 'conta' ? 'page' : undefined}>Minha conta</a>{user.role === 'admin' && <a href="#admin">Admin</a>}<button className="text-button" disabled={pending} onClick={() => void action(async () => { await access.logout(); setUser(null); setSubscription(undefined); setSettings(null); setUsers(null); route('login'); })}>Sair</button></nav>}
+      {user && <nav aria-label="Sua conta"><a href="#painel" aria-current={page === 'painel' ? 'page' : undefined}>Horários</a><a href="#configuracoes" aria-current={page === 'configuracoes' ? 'page' : undefined}>Configurações</a><a href="#historico" aria-current={page === 'historico' ? 'page' : undefined}>Execuções</a><a href="#conta" aria-current={page === 'conta' ? 'page' : undefined}>Minha conta</a>{user.role === 'admin' && <a href="#admin">Admin</a>}<button className="text-button" disabled={pending} onClick={() => void action(async () => { await access.logout(); setUser(null); setSubscription(undefined); setUsers(null); route('login'); })}>Sair</button></nav>}
     </header>
     {error && <p role="alert" className="message error">{error}</p>}
     {notice && <div role="status" className="toast"><span>{notice}</span><button aria-label="Fechar notificação" onClick={() => setNotice('')}>×</button></div>}
     {titles[page] ? <div className="access-layout">
-      <aside className="access-intro"><p className="eyebrow">SUA ROTINA, NO SEU TEMPO</p><h1>Seu acesso.<br/><span>Seu controle.</span></h1><p>Seus horários e marcações, em um só lugar.</p><div className="access-benefit"><strong>{TRIAL_DAYS} dias para conhecer.</strong><span>Cadastre sua conta e escolha sua assinatura.</span></div></aside>
+      <aside className="access-intro"><p className="eyebrow">SUA ROTINA, NO SEU TEMPO</p><h1>Seu acesso.<br/><span>Seu controle.</span></h1><p>Seus horários e marcações, em um só lugar.</p></aside>
       <section className="access-card" aria-labelledby="access-title"><h2 id="access-title">{page === 'confirmar-email' && emailConfirmed ? 'E-mail confirmado.' : titles[page]}</h2>
         {page === 'login' && <>
           <form onSubmit={e => submit(e, async data => {
@@ -114,15 +112,15 @@ function App() {
         </>}
         {page === 'confirmar-email' && (emailConfirmed ? <><p>Seu endereço foi verificado. Você já pode entrar na sua conta.</p><a className="button-link" href="#login">Ir para o login</a></> : <>
           <p>Abra o link de confirmação recebido por e-mail para concluir seu cadastro.</p>
-          <form onSubmit={e => submit(e, async data => { const address = String(data.get('email')).trim().toLowerCase(); await access.resendEmail(address); setEmail(address); setNotice('E-mail de confirmação reenviado.'); })}><fieldset className="plain" disabled={pending}>
-            <label>E-mail<input key={email} name="email" type="email" autoComplete="email" defaultValue={email} required maxLength={254}/></label><button type="submit" className="secondary">{pending ? 'Enviando…' : 'Reenviar confirmação'}</button>
-          </fieldset></form><p className="access-bottom"><a href="#login">Voltar ao login</a></p>
+          {email && <><p className="email-recipient"><strong>{email}</strong></p><button type="button" className="secondary" disabled={pending} onClick={() => void action(async () => { await access.resendEmail(email); setNotice('E-mail de confirmação reenviado.'); })}>{pending ? 'Enviando…' : 'Reenviar confirmação'}</button></>}
+          <p className="access-bottom"><a href="#login">Voltar ao login</a></p>
         </>)}
         {page === 'recuperar-senha' && <>
-          <p className="note">Informe seu e-mail para receber o link de recuperação.</p>
-          <form onSubmit={e => submit(e, async data => { await access.forgotPassword(String(data.get('email')).trim().toLowerCase()); setResetSent(true); })}><fieldset className="plain" disabled={pending}>
+          {!resetSent ? <><p className="note">Informe seu e-mail para receber o link de recuperação.</p>
+          <form onSubmit={e => submit(e, async data => { const address = String(data.get('email')).trim().toLowerCase(); await access.forgotPassword(address); setEmail(address); setResetSent(true); })}><fieldset className="plain" disabled={pending}>
             <label>E-mail<input name="email" type="email" autoComplete="email" placeholder="Seu e-mail" required maxLength={254}/></label><button type="submit">{pending ? 'Enviando…' : 'Enviar link de recuperação'}</button>
-          </fieldset></form>{resetSent && <p role="status" className="account-state">Se houver uma conta com esse e-mail, você receberá as instruções de recuperação.</p>}<p className="access-bottom"><a href="#login">Voltar ao login</a></p>
+          </fieldset></form></> : <><p role="status" className="account-state">Se houver uma conta com esse e-mail, você receberá as instruções de recuperação.</p><p className="email-recipient"><strong>{email}</strong></p><button type="button" className="secondary" disabled={pending} onClick={() => void action(async () => { await access.forgotPassword(email); setNotice('Solicitação de recuperação reenviada.'); })}>{pending ? 'Enviando…' : 'Reenviar link de recuperação'}</button></>}
+          <p className="access-bottom"><a href="#login">Voltar ao login</a></p>
         </>}
         {page === 'nova-senha' && <>
           <form onSubmit={e => submit(e, async data => { const password = String(data.get('password')); const confirmation = String(data.get('confirmation')); await access.resetPassword(password, confirmation, token); route('login'); setNotice('Senha atualizada. Entre com sua nova senha.'); })}><fieldset className="plain" disabled={pending}>
@@ -135,13 +133,7 @@ function App() {
       {page === 'admin' ? user.role === 'admin' ? <>
         <div className="section-title page-title"><h1>Usuários</h1></div>
         {users === null ? <p className="empty">{loadFailed ? 'Não foi possível carregar os usuários.' : 'Carregando usuários…'}</p> : users.length ? <div className="table-wrap"><table aria-label="Usuários"><thead><tr><th>Nome</th><th>E-mail</th><th>Permissão</th><th>E-mail confirmado</th></tr></thead><tbody>{users.map(item => <tr key={item.id}><td>{item.name}</td><td>{item.email}</td><td>{item.role === 'admin' ? 'Admin' : 'Usuário'}</td><td>{item.emailVerifiedAt ? 'Sim' : 'Não'}</td></tr>)}</tbody></table></div> : <p className="empty">Nenhum usuário encontrado.</p>}
-      </> : <section className="access-card access-denied"><h1>Acesso restrito</h1><p>Você não tem permissão para acessar esta página.</p><a href="#conta">Voltar para minha conta</a></section> : page === 'painel' ? <>
-        <div className="section-title page-title"><h1>Seus horários</h1></div>
-        {subscription === undefined && user.role !== 'admin' ? <p className="empty">{loadFailed ? 'Não foi possível carregar seu acesso.' : 'Carregando seu acesso…'}</p> : allowed ? <>
-          <div className="slots">{[['Entrada', settings?.entry], ['Almoço', settings?.lunch], ['Volta do almoço', settings?.returnFromLunch], ['Saída', settings?.exit]].map(([label, value]) => <div className="slot" key={label}><span>{label}</span><strong className="account-time">{value || '—:—'}</strong></div>)}</div>
-          <p className="note">{loadFailed ? 'Não foi possível carregar seus horários.' : settings ? 'Seus horários estão vinculados à sua conta.' : 'Seus horários aparecerão aqui quando forem configurados.'}</p>
-        </> : <section className="access-card"><h2>Ative seu acesso</h2><p>Confirme seu e-mail e cadastre um cartão para iniciar seus {TRIAL_DAYS} dias de teste.</p><a href="#conta">Ver minha assinatura</a></section>}
-      </> : <>
+      </> : <section className="access-card access-denied"><h1>Acesso restrito</h1><p>Você não tem permissão para acessar esta página.</p><a href="#conta">Voltar para minha conta</a></section> : ['painel', 'configuracoes', 'historico'].includes(page) ? <ClockPanel key={user.id} embedded page={page}/> : <>
         <div className="section-title page-title"><h1>Minha conta</h1></div>
         <div className="account-grid"><section className="access-card"><h2>{user.name}</h2><p>{user.email}</p><p className="account-state">{user.emailVerifiedAt ? 'E-mail confirmado' : 'Confirmação de e-mail pendente'}</p>{!user.emailVerifiedAt && <a href="#confirmar-email">Confirmar e-mail</a>}</section>
           <section className="access-card"><h2>Assinatura</h2>

@@ -37,7 +37,7 @@ export async function testConnection(settings: Settings): Promise<void> {
   await session(settings, async () => {});
 }
 
-export async function register(settings: Settings, dryRun: boolean, kind: Kind, beforeClick: () => void): Promise<string> {
+export async function register(settings: Settings, dryRun: boolean, kind: Kind, beforeClick: () => void | Promise<void>): Promise<string> {
   if (!dryRun && !process.env.EASYMOB_SUCCESS_SELECTOR) throw new Error('Configure o seletor de confirmação.');
   return session(settings, async page => {
     const button = process.env.EASYMOB_BUTTON_SELECTOR
@@ -54,7 +54,7 @@ export async function register(settings: Settings, dryRun: boolean, kind: Kind, 
     if (dryRun) return 'Login e botão verificados; nenhum ponto foi registrado.';
     const success = page.locator(process.env.EASYMOB_SUCCESS_SELECTOR!);
     if (await success.isVisible()) throw new Error('Indicador de sucesso já visível antes do clique. Revise o seletor.');
-    beforeClick();
+    await beforeClick();
     await button.click();
     await success.waitFor({ state: 'visible' });
     return 'Confirmação de registro identificada no EasyMOB.';

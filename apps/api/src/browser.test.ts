@@ -1,7 +1,7 @@
 import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
-import { testConnection } from './browser';
+import { register, testConnection } from './browser';
 import { defaultSlots, Settings } from './settings';
 
 const settings: Settings = { group: 'grupo', user: 'usuario', password: 'senha', dryRun: true, days: ['Mon'], excludedDates: [], slots: defaultSlots, variation: false, minWorkMinutes: 480 };
@@ -46,4 +46,19 @@ test('conectar só confirma acesso após encontrar a área autenticada e nunca r
     await assert.rejects(testConnection(settings), /login não foi confirmado/);
     assert.equal(closed, 2);
   } finally { launch.mock.restore(); }
+});
+test('uma autorização revogada antes do clique impede o registro do ponto', async t => {
+  const previous = process.env.EASYMOB_SUCCESS_SELECTOR;
+  process.env.EASYMOB_SUCCESS_SELECTOR = '#success';
+  const clicked: string[] = [];
+  const page = {
+    setDefaultTimeout() {}, async goto() {}, async waitForLoadState() {},
+    getByRole() { return { async isVisible() { return false; }, async waitFor() {}, async count() { return 1; }, async click() { clicked.push('ponto'); } }; },
+    locator(selector: string) { return { async fill() {}, async click() { clicked.push(selector); }, async waitFor() {}, async isVisible() { return false; } }; },
+  };
+  t.mock.method(chromium, 'launch', async () => ({ async newPage() { return page; }, async close() {} }) as any);
+  try {
+    await assert.rejects(register(settings, false, 'entrada', async () => { throw new Error('Acesso expirou'); }), /Acesso expirou/);
+    assert.deepEqual(clicked, ['#btnLogin']);
+  } finally { previous === undefined ? delete process.env.EASYMOB_SUCCESS_SELECTOR : process.env.EASYMOB_SUCCESS_SELECTOR = previous; }
 });

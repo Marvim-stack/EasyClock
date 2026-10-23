@@ -1,6 +1,29 @@
 {
-  "name": "@easyclock/api", "private": true,
-  "scripts": {"dev": "tsx watch src/main.ts", "build": "tsc", "start": "node dist/main.js", "test": "tsx --test src/*.test.ts"},
-  "dependencies": {"@nestjs/common": "^11.0.0", "@nestjs/core": "^11.0.0", "@nestjs/platform-express": "^11.0.0", "@nestjs/serve-static": "^5.0.0", "dotenv": "^16.4.7", "playwright": "^1.51.0", "reflect-metadata": "^0.2.2", "rxjs": "^7.8.2"},
-  "devDependencies": {"@types/node": "^22.13.0", "tsx": "^4.19.3", "typescript": "^5.7.3"}
+  "name": "@easyclock/api",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "test": "tsx --test src/*.test.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/serve-static": "^5.0.0",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
+    "dotenv": "^16.4.7",
+    "pg": "^8.23.1",
+    "playwright": "^1.51.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
 }

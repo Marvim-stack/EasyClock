@@ -1,10 +1,10 @@
-import type { User, Subscription, UserConfiguration } from '../../../api/src/accounts';
+import type { User, Subscription } from '../../../api/src/accounts';
 
 async function request<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`/api/access/${path}`, {
     method: body === undefined ? 'GET' : 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-EasyClock-Request': '1' },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   const result = await response.json().catch(() => null);
@@ -22,7 +22,6 @@ export const access = {
   resetPassword: (password: string, confirmation: string, token: string) => request<void>('password/reset', { password, confirmation, token }),
   logout: () => request<void>('logout', {}),
   subscription: () => request<{ subscription: Subscription | null }>('subscription'),
-  settings: () => request<{ settings: UserConfiguration | null }>('settings'),
   users: () => request<{ users: User[] }>('admin/users'),
   checkout: () => request<{ url: string }>('billing/checkout', {}),
   billingPortal: () => request<{ url: string }>('billing/portal', {}),

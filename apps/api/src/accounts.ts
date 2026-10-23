@@ -15,14 +15,6 @@ export type Subscription = {
   currentPeriodEndsAt: string | null;
   cancelAtPeriodEnd: boolean;
 };
-export type UserConfiguration = {
-  userId: string;
-  entry: string;
-  lunch: string;
-  returnFromLunch: string;
-  exit: string;
-  workDays: string[];
-};
 export const TRIAL_DAYS = 7;
 
 export function validatePassword(password: string, confirmation: string): void {
