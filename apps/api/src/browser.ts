@@ -4,8 +4,14 @@ import { Settings, Kind } from './settings';
 export class PortalError extends Error {}
 
 async function session<T>(settings: Settings, action: (page: Page) => Promise<T>): Promise<T> {
-  if (!settings.group || !settings.user || !settings.password) throw new PortalError('Abra Acesso e ajustes, informe suas credenciais e salve antes de consultar.');
-  const browser = await chromium.launch({ headless: process.env.HEADLESS !== 'false' });
+  if (!settings.group || !settings.user || !settings.password) throw new PortalError('Informe grupo, usuário e senha em Configurações e clique em Conectar.');
+  const browser = await chromium.launch({ headless: process.env.HEADLESS !== 'false' }).catch((error: Error) => {
+    if (/error while loading shared libraries|Host system is missing dependencies|Missing libraries/i.test(error.message))
+      throw new PortalError('Faltam bibliotecas Linux para abrir o navegador. No terminal do projeto, execute: sudo npx playwright install-deps chromium. Depois clique em Conectar novamente.');
+    if (/Executable doesn't exist/i.test(error.message))
+      throw new PortalError('O Chromium não está instalado. No terminal do projeto, execute: npx playwright install chromium. Depois clique em Conectar novamente.');
+    throw new PortalError('Não foi possível iniciar o navegador. Confira se o Chromium está instalado e se HEADLESS=true no .env.');
+  });
   try {
     const page = await browser.newPage({ timezoneId: 'America/Sao_Paulo', locale: 'pt-BR' });
     page.setDefaultTimeout(30_000);
@@ -19,11 +25,16 @@ async function session<T>(settings: Settings, action: (page: Page) => Promise<T>
     try {
       await page.locator('#btnLogin').waitFor({ state: 'hidden' });
       await page.waitForLoadState('domcontentloaded');
-    } catch { throw new PortalError('O login não foi concluído. Confira grupo, usuário e senha em Acesso e ajustes.'); }
+      await page.locator('#btnConsultar').waitFor({ state: 'visible' });
+    } catch { throw new PortalError('O login não foi confirmado. Confira grupo, usuário e senha em Configurações.'); }
     return await action(page);
   } finally {
     await browser.close();
   }
+}
+
+export async function testConnection(settings: Settings): Promise<void> {
+  await session(settings, async () => {});
 }
 
 export async function register(settings: Settings, dryRun: boolean, kind: Kind, beforeClick: () => void): Promise<string> {
@@ -41,7 +52,6 @@ export async function register(settings: Settings, dryRun: boolean, kind: Kind, 
       await page.locator(typeSelector).selectOption(values[kind]);
     }
     if (dryRun) return 'Login e botão verificados; nenhum ponto foi registrado.';
-    if (!typeSelector && ['inicio_extra', 'fim_extra'].includes(kind)) throw new Error('Configure o mapeamento do tipo de ponto extra no portal.');
     const success = page.locator(process.env.EASYMOB_SUCCESS_SELECTOR!);
     if (await success.isVisible()) throw new Error('Indicador de sucesso já visível antes do clique. Revise o seletor.');
     beforeClick();
