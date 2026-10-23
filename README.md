@@ -56,3 +56,23 @@ npm run build
 ```
 
 Os testes verificam horários, fuso, fins de semana e datas excluídas. Não registram ponto real. A integração autenticada precisa ser conferida no ambiente de uso.
+
+## Configurações pelo painel
+
+A página **Configurações** permite informar credenciais, escolher simulação, dias ativos, folgas e até 32 horários com tipo. Uma data específica limita o horário àquele dia (inclusive extras). Datas específicas continuam respeitando dias ativos e folgas. Sem data, o horário é recorrente. Horários sobrepostos são rejeitados.
+
+Depois do primeiro salvamento, `data/settings.json` passa a ter prioridade sobre as credenciais, calendário e modo do `.env`. O arquivo tem permissão 600 e não entra no Git. Deixar a senha vazia no formulário mantém a senha anterior; a API nunca devolve a senha salva. Trocar grupo ou usuário pausa o agendamento e limpa o cache de marcações. O histórico de execuções local é preservado.
+
+**Execuções** é uma página separada com paginação. **Marcações no portal** consulta dados autenticados do EasyMOB, mantém a última consulta em disco e permite filtrar seu conteúdo. Não transforma execuções em comprovantes de ponto. Se uma consulta falhar, o cache anterior é mantido com sua data original.
+
+A integração de consulta exige `EASYMOB_PUNCHES_URL` (opcional, mesmo domínio do EasyMOB) e `EASYMOB_PUNCHES_SELECTOR` (seletor de uma tabela com linhas e células). Esses seletores ainda precisam ser conferidos na área autenticada da conta. A consulta traz as linhas presentes nessa tabela; não navega por páginas ou períodos adicionais do portal.
+
+Para selecionar efetivamente um tipo no portal, configure `EASYMOB_TYPE_SELECTOR` para o elemento `select` e `EASYMOB_TYPE_VALUES` com os valores reais das opções, por exemplo um objeto com chaves `entrada`, `saida_almoco`, `retorno_almoco`, `saida`, `inicio_extra`, `fim_extra`. Não invente valores: confira os existentes no portal. Sem mapeamento, os tipos regulares servem como rótulos locais e o portal determina a marcação; registros extras reais são bloqueados. O teste de login não comprova o tipo nem o sucesso de um registro real.
+
+A consulta de localização usa a permissão do navegador e exibe a posição real, precisão e instante de captura, apenas na sessão atual. Não altera a localização do Chromium no servidor. Não há localização falsa nem horários aleatórios para disfarçar registros automáticos.
+
+Após atualizar o código, reconstrua o container:
+
+```bash
+sudo docker compose up -d --build
+```

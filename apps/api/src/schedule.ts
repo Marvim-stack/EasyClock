@@ -6,8 +6,8 @@ export function localTime(now = new Date()) {
   }).formatToParts(now).map(p => [p.type, p.value]));
   return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}`, weekday: parts.weekday };
 }
-export function due(now: Date, days: string[], excluded: string[]) {
+export function due(now: Date, days: string[], excluded: string[], times = slots) {
   const local = localTime(now);
-  return days.includes(local.weekday) && !excluded.includes(local.date) && slots.includes(local.time)
+  return days.includes(local.weekday) && !excluded.includes(local.date) && times.includes(local.time)
     ? `${local.date}/${local.time}` : undefined;
 }
