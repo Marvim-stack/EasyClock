@@ -1,7 +1,9 @@
 # E-mails do EasyClock
 
-Os HTMLs usam a logo já publicada no repositório, fundo escuro e as cores do
-painel. Não anunciam planos, valores ou teste gratuito. Os links usam os hashes
+Os HTMLs usam a nova marca EasyClock: símbolo de relógio, tipografia limpa e
+cores cobre/off-white. A versão PNG transparente fica em
+`apps/web/public/easyclock-logo.png`; o site usa `easyclock-logo.svg` e o ícone
+da aba usa `favicon.svg`. Não anunciam planos, valores ou teste gratuito. Os links usam os hashes
 suportados pelo backend; não troque por um token de sessão.
 
 No Supabase, abra **Authentication → Email Templates** e salve:

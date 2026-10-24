@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="72" viewBox="0 0 320 72" role="img" aria-labelledby="title">
+  <title id="title">EasyClock</title>
+  <rect x="4" y="8" width="56" height="56" rx="16" fill="#d59a81"/>
+  <path d="M44.7 24.7a18 18 0 1 0 0 22.6" fill="none" stroke="#201b18" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M30.7 24.7V36h12" fill="none" stroke="#201b18" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="47.6" cy="36" r="2.2" fill="#201b18"/>
+  <text x="78" y="48" fill="#f2eee7" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="700" letter-spacing="-1.7">Easy<tspan fill="#d59a81">Clock</tspan></text>
+</svg>

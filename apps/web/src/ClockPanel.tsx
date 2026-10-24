@@ -94,7 +94,7 @@ export function ClockPanel({ embedded = false, page: accountPage }: { embedded?:
     setNotice(saved.variation ? 'Humanização ativada e salva. Confira os horários de hoje nos cartões.' : 'Humanização desligada. Os horários fixos serão usados.');
   }
   return <Frame>
-    {!embedded && <header><a className="brand" href="#inicio" aria-label="EasyClock · início"><img className="brand-logo" src="/easyclock-logo.png" alt="EasyClock — Chora agora, ri depois. Palhaços chorando e sorrindo." width="300" height="100"/></a>
+    {!embedded && <header><a className="brand" href="#inicio" aria-label="EasyClock · início"><img className="brand-logo" src="/easyclock-logo.svg" alt="EasyClock" width="320" height="72"/></a>
       <nav aria-label="Navegação principal">{[['inicio','Horários'],['configuracoes','Configurações'],['historico','Execuções']].map(([id, title]) => <a key={id} href={`#${id}`} aria-current={page === id ? 'page' : undefined}>{title}</a>)}</nav>
     </header>}
     <div className={`connection-status ${connected ? 'connected' : 'disconnected'}`} role="status">
