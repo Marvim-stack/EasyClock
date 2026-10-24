@@ -79,7 +79,7 @@ function App() {
     location.assign(url.href);
   }
   return <main className="access-app">
-    <header><a className="brand" href={user ? '#painel' : '#login'} aria-label="EasyClock · início"><img className="brand-logo" src="/easyclock-logo.svg" width="320" height="72" alt="EasyClock"/></a>
+    <header><a className="brand" href={user ? '#painel' : '#login'} aria-label="EasyClock Pro · início"><img className="brand-logo" src="/easyclock-logo.svg" width="360" height="72" alt="EasyClock Pro"/></a>
       {user && <nav aria-label="Sua conta"><a href="#painel" aria-current={page === 'painel' ? 'page' : undefined}>Horários</a><a href="#configuracoes" aria-current={page === 'configuracoes' ? 'page' : undefined}>Configurações</a><a href="#historico" aria-current={page === 'historico' ? 'page' : undefined}>Execuções</a><a href="#conta" aria-current={page === 'conta' ? 'page' : undefined}>Minha conta</a>{user.role === 'admin' && <a href="#admin">Admin</a>}<button className="text-button" disabled={pending} onClick={() => void action(async () => { await access.logout(); setUser(null); setSubscription(undefined); setUsers(null); route('login'); })}>Sair</button></nav>}
     </header>
     {error && <p role="alert" className="message error">{error}</p>}
@@ -141,7 +141,7 @@ function App() {
           </section></div>
       </>}
     </>}
-    <footer><span>EasyClock</span><span>Horário de São Paulo</span></footer>
+    <footer><span>EasyClock Pro</span><span>Horário de São Paulo</span></footer>
   </main>;
 }
 
